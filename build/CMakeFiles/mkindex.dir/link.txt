@@ -1,0 +1,1 @@
+/usr/bin/g++ -g CMakeFiles/mkindex.dir/mkindex.cpp.o -o mkindex  /home/francob/dev/vcpkg/installed/x64-linux/debug/lib/libsqlite3.a -ldl -lm 
