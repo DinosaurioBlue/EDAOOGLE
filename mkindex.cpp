@@ -30,14 +30,20 @@ static int onDatabaseEntry(void *userdata,
 
     return 0;
 }
-
+/*****************************************************MAIN************************** */
 int main(int argc,
          const char *argv[])
 {
     char *databaseFile = "index.db";
     sqlite3 *database;
     char *databaseErrorMessage;
+    string name;
+    name = "myTable";
+    string auxstr = "CREATE VIRTUAL TABLE " + name + " USING fts5(title,url, body);";
 
+
+
+    
     // Open database file
     cout << "Opening database..." << endl;
     if (sqlite3_open(databaseFile, &database) != SQLITE_OK)
@@ -50,60 +56,73 @@ int main(int argc,
     // Create a sample table
     cout << "Creating table..." << endl;
     if (sqlite3_exec(database,
-                     "CREATE TABLE room_occupation "
-                     "(id INTEGER PRIMARY KEY,"
-                     "room varchar DEFAULT NULL,"
-                     "reserved_from DATETIME,"
-                     "reserved_until DATETIME);",
+                     auxstr.c_str(),
                      NULL,
                      0,
-                     &databaseErrorMessage) != SQLITE_OK)
-        cout << "Error: " << sqlite3_errmsg(database) << endl;
+                     &databaseErrorMessage) != SQLITE_OK){
+                         cout << "Error: " << sqlite3_errmsg(database) << endl;
+                     }
+       
 
-    // Delete previous entries if table already existed
+    //Delete previous entries if table already existed
     cout << "Deleting previous entries..." << endl;
+    auxstr = "DELETE FROM " + name;
     if (sqlite3_exec(database,
-                     "DELETE FROM room_occupation;",
+                     auxstr.c_str(),
                      NULL,
                      0,
-                     &databaseErrorMessage) != SQLITE_OK)
-        cout << "Error: " << sqlite3_errmsg(database) << endl;
+                     &databaseErrorMessage) != SQLITE_OK){
+                        cout << "Error: " << sqlite3_errmsg(database) << endl;
+                     }
+        
 
-    // Create sample entries
+    // // Create sample entries
+
+
+    auxstr = "INSERT INTO " + name + " (title,url,body) VALUES\n";
     cout << "Creating sample entries..." << endl;
     if (sqlite3_exec(database,
-                     "INSERT INTO room_occupation (room, reserved_from, reserved_until) VALUES "
-                     "('401F','2022-03-03 15:00:00','2022-03-03 16:00:00');",
+                     "INSERT INTO mytable (title, url, body) VALUES "
+                     "('goku','hhhtppf.','esto es un tecto');",
                      NULL,
                      0,
-                     &databaseErrorMessage) != SQLITE_OK)
-        cout << "Error: " << sqlite3_errmsg(database) << endl;
-    if (sqlite3_exec(database,
-                     "INSERT INTO room_occupation (room, reserved_from, reserved_until) VALUES "
-                     "('501F','2022-03-03 15:00:00','2022-03-03 17:00:00');",
+                     &databaseErrorMessage) != SQLITE_OK){
+                         cout << "Error: " << sqlite3_errmsg(database) << endl;
+                     }
+    // cout << "Creating sample entries..." << endl;
+    // if (sqlite3_exec(database,
+                    //  "INSERT INTO room_occupation (room, reserved_from, reserved_until) VALUES "
+                    //  "('401F','2022-03-03 15:00:00','2022-03-03 16:00:00');",
                      NULL,
-                     0,
-                     &databaseErrorMessage) != SQLITE_OK)
-        cout << "Error: " << sqlite3_errmsg(database) << endl;
-    if (sqlite3_exec(database,
-                     "INSERT INTO room_occupation (room, reserved_from, reserved_until) VALUES "
-                     "('001R','2022-03-03 15:00:00','2022-03-03 16:30:00');",
-                     NULL,
-                     0,
-                     &databaseErrorMessage) != SQLITE_OK)
-        cout << "Error: " << sqlite3_errmsg(database) << endl;
-    if (sqlite3_exec(database,
-                     "INSERT INTO room_occupation (room, reserved_from, reserved_until) VALUES "
-                     "('1001F','2022-03-03 15:30:00','2022-03-03 16:30:00');",
-                     NULL,
-                     0,
-                     &databaseErrorMessage) != SQLITE_OK)
-        cout << "Error: " << sqlite3_errmsg(database) << endl;
+    //                  0,
+    //                  &databaseErrorMessage) != SQLITE_OK)
+    //     cout << "Error: " << sqlite3_errmsg(database) << endl;
+    // if (sqlite3_exec(database,
+    //                  "INSERT INTO room_occupation (room, reserved_from, reserved_until) VALUES "
+    //                  "('501F','2022-03-03 15:00:00','2022-03-03 17:00:00');",
+    //                  NULL,
+    //                  0,
+    //                  &databaseErrorMessage) != SQLITE_OK)
+    //     cout << "Error: " << sqlite3_errmsg(database) << endl;
+    // if (sqlite3_exec(database,
+    //                  "INSERT INTO room_occupation (room, reserved_from, reserved_until) VALUES "
+    //                  "('001R','2022-03-03 15:00:00','2022-03-03 16:30:00');",
+    //                  NULL,
+    //                  0,
+    //                  &databaseErrorMessage) != SQLITE_OK)
+    //     cout << "Error: " << sqlite3_errmsg(database) << endl;
+    // if (sqlite3_exec(database,
+    //                  "INSERT INTO room_occupation (room, reserved_from, reserved_until) VALUES "
+    //                  "('1001F','2022-03-03 15:30:00','2022-03-03 16:30:00');",
+    //                  NULL,
+    //                  0,
+    //                  &databaseErrorMessage) != SQLITE_OK)
+    //     cout << "Error: " << sqlite3_errmsg(database) << endl;
 
     // Fetch entries
     cout << "Fetching entries..." << endl;
     if (sqlite3_exec(database,
-                     "SELECT * from room_occupation;",
+                     "SELECT * from myTable;",
                      onDatabaseEntry,
                      0,
                      &databaseErrorMessage) != SQLITE_OK)
