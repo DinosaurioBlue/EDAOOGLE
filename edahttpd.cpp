@@ -44,6 +44,7 @@ int main(int argc, const char *argv[])
 
     if (parser.hasOption("-p"))
         port = stoi(parser.getOption("-p"));
+    
 
     // Start server
     HttpServer server(port);

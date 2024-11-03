@@ -1,2 +1,3 @@
 # EDAOOGLE
-comando para mandar las carpetas a 
+path a carpeta www:
+/home/francob/Desktop/eda/EDAOOGLE/www/wiki
