@@ -59,15 +59,15 @@ int main(int argc,
         return 1;
     }
 
-//    // Drop table if exists and recreate
-//    const char* drop_table = "DROP TABLE IF EXISTS paginas_web;";
-//    if (sqlite3_exec(db, drop_table, nullptr, nullptr, &errorMessage) != SQLITE_OK) {
-//        std::cout << "Error dropping table: " << errorMessage << std::endl;
-//        sqlite3_free(errorMessage);
-//        sqlite3_close(db);
-//        return 1;
-//    }
-//    std::cout << "Previous table deleted if existed" << std::endl;
+   // Drop table if exists and recreate
+   const char * drop_table = "DROP TABLE IF EXISTS paginas_web;";
+   if (sqlite3_exec(db, drop_table, nullptr, nullptr, &errorMessage) != SQLITE_OK) {
+       std::cout << "Error dropping table: " << errorMessage << std::endl;
+       sqlite3_free(errorMessage);
+       sqlite3_close(db);
+       return 1;
+   }
+   std::cout << "Previous table deleted if existed" << std::endl;
 
     // Creamos tabla con FTS5
     const char* create_table = "CREATE VIRTUAL TABLE paginas_web USING fts5(titulo, contenido);";
@@ -104,7 +104,7 @@ int main(int argc,
     filesystem::path wiki = wikiPath;
 
     // Chequeamos si la carpeta existe
-    if (filesystem::exists(wiki)) {
+    if (!(filesystem::exists(wiki))) {
         cerr << "Wiki folder does not exist!";
         return 1;
     }
@@ -119,12 +119,12 @@ int main(int argc,
         return 1;
     }
 
-
+    int i =0;
     // Iteramos sobre los archivos
     for (const auto& entry : filesystem::directory_iterator(wiki)) {
         // Chequeamos si tienen extension html
         if (entry.is_regular_file() && entry.path().extension() == ".html") {
-            std::ifstream file(entry);
+            std::ifstream file(entry.path());
             // Leemos al contenido del archivo a un string
             std::string HTMLContent((std::istreambuf_iterator<char>(file)),
                                 std::istreambuf_iterator<char>());
@@ -136,19 +136,27 @@ int main(int argc,
             const char* content = strippedHTML.c_str();
 
             // Pre cargamos los comandos y declaraciones para insertar (se guardan en stmt)
-            sqlite3_bind_text(stmt, 1, title, -1, SQLITE_STATIC);
-            sqlite3_bind_text(stmt, 2, content, -1, SQLITE_STATIC);
+            sqlite3_bind_text(stmt, 1, title, -1, SQLITE_TRANSIENT);
+            sqlite3_bind_text(stmt, 2, content, -1, SQLITE_TRANSIENT);
+
 
             // Ejecutamos
             if (sqlite3_step(stmt) != SQLITE_DONE) {
                 std::cout << "Error inserting data: " << sqlite3_errmsg(db) << std::endl;
+                sqlite3_reset(stmt);
+
             } else {
                 std::cout << "Data inserted successfully" << std::endl;
+                sqlite3_reset(stmt);
+
             }
 
             cout << "Processed: " << entry.path().filename() << '\n';
+            i++;
+            cout << i;
         }
     }
+    cout << "tabla terminada\n";
 
 
 
