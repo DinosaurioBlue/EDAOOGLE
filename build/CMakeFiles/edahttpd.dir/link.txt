@@ -1,1 +1,0 @@
-/usr/bin/g++ -g CMakeFiles/edahttpd.dir/edahttpd.cpp.o CMakeFiles/edahttpd.dir/CommandLineParser.cpp.o CMakeFiles/edahttpd.dir/HttpServer.cpp.o CMakeFiles/edahttpd.dir/HttpRequestHandler.cpp.o -o edahttpd  /home/francob/dev/vcpkg/installed/x64-linux/debug/lib/libmicrohttpd.a /home/francob/dev/vcpkg/installed/x64-linux/debug/lib/libsqlite3.a -ldl -lm 

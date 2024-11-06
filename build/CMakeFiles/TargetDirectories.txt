@@ -1,4 +1,0 @@
-/home/francob/Desktop/eda/EDAOOGLE/build/CMakeFiles/edahttpd.dir
-/home/francob/Desktop/eda/EDAOOGLE/build/CMakeFiles/mkindex.dir
-/home/francob/Desktop/eda/EDAOOGLE/build/CMakeFiles/edit_cache.dir
-/home/francob/Desktop/eda/EDAOOGLE/build/CMakeFiles/rebuild_cache.dir
