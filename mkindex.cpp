@@ -1,11 +1,8 @@
 /**
  * @file mkindex.cpp
- * @author Marc S. Ressl
- * @brief Makes a database index
- * @version 0.3
- *
- * @copyright Copyright (c) 2022-2024 Marc S. Ressl
+ * @brief Makes a database index with URLs
  */
+
 #ifndef SQLITE_ENABLE_FTS5
 #define SQLITE_ENABLE_FTS5
 #endif
@@ -21,13 +18,9 @@
 #include <regex>
 #include "CommandLineParser.h"
 
-
 using namespace std;
 
-static int onDatabaseEntry(void *userdata,
-                           int argc,
-                           char **argv,
-                           char **azColName)
+static int onDatabaseEntry(void *userdata, int argc, char **argv, char **azColName)
 {
     cout << "--- Entry" << endl;
     for (int i = 0; i < argc; i++)
@@ -46,9 +39,7 @@ string stripHTMLTags(string& html) {
     return regex_replace(html, tag_re, "");
 }
 
-/*****************************************************MAIN************************** */
-int main(int argc,
-         const char *argv[])
+int main(int argc, const char *argv[])
 {
     sqlite3* db = nullptr;
     char* errorMessage = nullptr;
@@ -59,18 +50,18 @@ int main(int argc,
         return 1;
     }
 
-   // Drop table if exists and recreate
-   const char * drop_table = "DROP TABLE IF EXISTS paginas_web;";
-   if (sqlite3_exec(db, drop_table, nullptr, nullptr, &errorMessage) != SQLITE_OK) {
-       std::cout << "Error dropping table: " << errorMessage << std::endl;
-       sqlite3_free(errorMessage);
-       sqlite3_close(db);
-       return 1;
-   }
-   std::cout << "Previous table deleted if existed" << std::endl;
+    // Eliminamos la tabla existente y la recreamos
+    const char * drop_table = "DROP TABLE IF EXISTS paginas_web;";
+    if (sqlite3_exec(db, drop_table, nullptr, nullptr, &errorMessage) != SQLITE_OK) {
+        std::cout << "Error dropping table: " << errorMessage << std::endl;
+        sqlite3_free(errorMessage);
+        sqlite3_close(db);
+        return 1;
+    }
+    std::cout << "Previous table deleted if existed" << std::endl;
 
-    // Creamos tabla con FTS5
-    const char* create_table = "CREATE VIRTUAL TABLE paginas_web USING fts5(titulo, contenido);";
+    // Creamos la tabla con FTS5 y agregamos la columna `url`
+    const char* create_table = "CREATE VIRTUAL TABLE paginas_web USING fts5(titulo, url, contenido);";
     if (sqlite3_exec(db, create_table, nullptr, nullptr, &errorMessage) != SQLITE_OK) {
         std::cout << "Error creating table: " << errorMessage << std::endl;
         sqlite3_free(errorMessage);
@@ -81,11 +72,8 @@ int main(int argc,
 
     // Borramos entradas previas
     cout << "Deleting previous entries..." << endl;
-    if (sqlite3_exec(db,"DELETE FROM paginas_web;", nullptr, nullptr,
-                     &errorMessage) != SQLITE_OK)
+    if (sqlite3_exec(db,"DELETE FROM paginas_web;", nullptr, nullptr, &errorMessage) != SQLITE_OK)
         cout << "Error: " << sqlite3_errmsg(db) << endl;
-
-
 
     // AQUI COMIENZA LA PARTE DE INSERCIÓN
 
@@ -104,14 +92,14 @@ int main(int argc,
     filesystem::path wiki = wikiPath;
 
     // Chequeamos si la carpeta existe
-    if (!(filesystem::exists(wiki))) {
+    if (!filesystem::exists(wiki)) {
         cerr << "Wiki folder does not exist!";
         return 1;
     }
 
     // Preparamos el template de inserción
     sqlite3_stmt* stmt = nullptr;
-    const char* insert_sql = "INSERT INTO paginas_web (titulo, contenido) VALUES (?, ?);";
+    const char* insert_sql = "INSERT INTO paginas_web (titulo, url, contenido) VALUES (?, ?, ?);";
 
     if (sqlite3_prepare_v2(db, insert_sql, -1, &stmt, nullptr) != SQLITE_OK) {
         std::cout << "Error preparing statement: " << sqlite3_errmsg(db) << std::endl;
@@ -119,49 +107,45 @@ int main(int argc,
         return 1;
     }
 
-    int i =0;
+    int i = 0;
     // Iteramos sobre los archivos
     for (const auto& entry : filesystem::directory_iterator(wiki)) {
         // Chequeamos si tienen extension html
         if (entry.is_regular_file() && entry.path().extension() == ".html") {
             std::ifstream file(entry.path());
             // Leemos al contenido del archivo a un string
-            std::string HTMLContent((std::istreambuf_iterator<char>(file)),
-                                std::istreambuf_iterator<char>());
+            std::string HTMLContent((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 
+            // Quitamos etiquetas HTML para extraer el contenido de texto
             string strippedHTML = stripHTMLTags(HTMLContent);
 
-            // Preparo para insertar, los strings deben estar en estilo C
+            // Extraemos el título y creamos la URL
             const char* title = entry.path().stem().c_str(); // Pone como titulo el nombre del archivo
+            string url = "/wiki/" + entry.path().filename().string();  // URL relativa basada en la ruta del archivo
             const char* content = strippedHTML.c_str();
 
             // Pre cargamos los comandos y declaraciones para insertar (se guardan en stmt)
             sqlite3_bind_text(stmt, 1, title, -1, SQLITE_TRANSIENT);
-            sqlite3_bind_text(stmt, 2, content, -1, SQLITE_TRANSIENT);
-
+            sqlite3_bind_text(stmt, 2, url.c_str(), -1, SQLITE_TRANSIENT);
+            sqlite3_bind_text(stmt, 3, content, -1, SQLITE_TRANSIENT);
 
             // Ejecutamos
             if (sqlite3_step(stmt) != SQLITE_DONE) {
                 std::cout << "Error inserting data: " << sqlite3_errmsg(db) << std::endl;
                 sqlite3_reset(stmt);
-
             } else {
                 std::cout << "Data inserted successfully" << std::endl;
                 sqlite3_reset(stmt);
-
             }
 
             cout << "Processed: " << entry.path().filename() << '\n';
             i++;
-            cout << i;
         }
     }
-    cout << "tabla terminada\n";
+    cout << "Tabla completada con " << i << " entradas." << endl;
 
-
-
+    // Cerramos la base de datos
     cout << "Closing database..." << endl;
     sqlite3_finalize(stmt);
     sqlite3_close(db);
-
 }
